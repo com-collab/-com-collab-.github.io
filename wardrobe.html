@@ -364,6 +364,17 @@
 <div class="toast" id="toast"></div>
 
 <script>
+window.addEventListener("error", function(e){ showErr(e.message + " (line " + e.lineno + ")"); });
+window.addEventListener("unhandledrejection", function(e){ showErr(String(e.reason && e.reason.message || e.reason)); });
+function showErr(m){
+  var b = document.getElementById("errbar");
+  if(!b){ b = document.createElement("div"); b.id = "errbar";
+    b.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:999;background:#ff7a8a;color:#200;padding:10px 14px;font:13px sans-serif";
+    document.body.appendChild(b); }
+  b.textContent = "Something went wrong: " + m;
+}
+</script>
+<script>
 "use strict";
 /* ============================================================
    My Wardrobe — single-file app. Nothing leaves this phone.
@@ -389,6 +400,8 @@ function idb(){
     r.onupgradeneeded = () => r.result.createObjectStore("kv");
     r.onsuccess = () => res(r.result);
     r.onerror = () => rej(r.error);
+    r.onblocked = () => rej(new Error("storage blocked"));
+    setTimeout(() => rej(new Error("storage timed out")), 3000);
   });
 }
 async function load(){
@@ -1364,7 +1377,8 @@ document.querySelectorAll(".sheet").forEach(sh =>
   sh.addEventListener("click", (e) => { if(e.target === sh) sh.classList.remove("on"); }));
 
 /* ---------- go ---------- */
-load().then(() => go("wardrobe"));
+go("wardrobe");
+load().then(() => go("wardrobe")).catch(() => go("wardrobe"));
 </script>
 </body>
 </html>
